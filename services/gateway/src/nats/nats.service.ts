@@ -114,6 +114,73 @@ export class NatsService implements OnModuleDestroy {
     }
   }
 
+  async publishBulkEvents(
+    source: 'facebook' | 'tiktok', 
+    events: any[], 
+    correlationId: string
+  ): Promise<{ published: number; failed: number }> {
+    const batchSize = 100; // Publish in smaller batches to NATS
+    let published = 0;
+    let failed = 0;
+    
+    this.logger.log(`Publishing ${events.length} events to NATS in batches of ${batchSize}`);
+    
+    for (let i = 0; i < events.length; i += batchSize) {
+      const batch = events.slice(i, i + batchSize);
+      const batchNumber = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(events.length / batchSize);
+      
+      try {
+        // Create publish promises for the batch
+        const publishPromises = batch.map(async (event) => {
+          try {
+            const subject = `events.${source}.${event.funnelStage}`;
+            const payload = {
+              ...event,
+              correlationId,
+              publishedAt: new Date().toISOString(),
+            };
+
+            await this.jetStream.publish(subject, JSON.stringify(payload));
+            return { success: true };
+          } catch (error) {
+            return { success: false, error: error.message };
+          }
+        });
+        
+        // Wait for all promises in the batch
+        const results = await Promise.allSettled(publishPromises);
+        
+        // Count results
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            if (result.value.success) {
+              published++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+          }
+        });
+        
+        this.logger.log(`Batch ${batchNumber}/${totalBatches} published: ${batch.length} events`);
+        
+        // Small delay between batches to prevent overwhelming NATS
+        if (i + batchSize < events.length) {
+          await new Promise(resolve => setTimeout(resolve, 5));
+        }
+        
+      } catch (error) {
+        this.logger.error(`Failed to publish batch ${batchNumber}`, error.stack);
+        failed += batch.length;
+      }
+    }
+    
+    this.logger.log(`Bulk publishing completed: ${published} published, ${failed} failed`);
+    return { published, failed };
+  }
+
   isConnected(): boolean {
     return this.connection && !this.connection.isClosed();
   }

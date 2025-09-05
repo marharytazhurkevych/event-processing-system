@@ -22,12 +22,13 @@ model ProcessedEvent {
   processedAt  DateTime @default(now())
   correlationId String
   
-  // Indexes for efficient querying
+  // Indexes for efficient querying and bulk operations
   @@index([source, timestamp])
   @@index([funnelStage, timestamp])
   @@index([eventType, timestamp])
   @@index([userId, timestamp])
   @@index([timestamp])
+  @@index([correlationId]) // For bulk operation tracking
   @@map("processed_events")
 }
 
@@ -53,6 +54,7 @@ model UserDemographics {
   city        String?
   followers   Int?
   username    String?
+  name        String?  // For Facebook users
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -60,6 +62,7 @@ model UserDemographics {
   @@index([source, age])
   @@index([source, gender])
   @@index([source, country])
+  @@index([userId]) // For bulk upsert operations
   @@map("user_demographics")
 }
 

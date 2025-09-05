@@ -65,6 +65,10 @@ export const tiktokEventSchema = z.object({
 
 export const webhookEventSchema = z.union([facebookEventSchema, tiktokEventSchema]);
 
+export const bulkWebhookEventSchema = z.object({
+  events: z.array(webhookEventSchema).min(1).max(50000), // Max 50k events per request
+});
+
 export type TimeRangeInput = z.infer<typeof timeRangeSchema>;
 export type ReportFiltersInput = z.infer<typeof reportFiltersSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
@@ -72,3 +76,4 @@ export type EventInput = z.infer<typeof eventSchema>;
 export type FacebookEventInput = z.infer<typeof facebookEventSchema>;
 export type TiktokEventInput = z.infer<typeof tiktokEventSchema>;
 export type WebhookEventInput = z.infer<typeof webhookEventSchema>;
+export type BulkWebhookEventInput = z.infer<typeof bulkWebhookEventSchema>;
