@@ -8,7 +8,7 @@ COPY shared/package*.json ./shared/
 COPY services/gateway/package*.json ./services/gateway/
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY shared/ ./shared/
@@ -27,7 +27,7 @@ COPY shared/package*.json ./shared/
 COPY services/gateway/package*.json ./services/gateway/
 
 # Install production dependencies
-RUN npm ci --only=production
+RUN npm ci --only=production --legacy-peer-deps
 
 # Copy built application
 COPY --from=builder /app/services/gateway/dist ./services/gateway/dist

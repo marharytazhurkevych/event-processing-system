@@ -32,16 +32,21 @@ The system consists of the following microservices:
 
 1. **Clone and setup**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/marharytazhurkevych/event-processing-system.git
    cd event-processing-system
    cp env.example .env
    ```
 
 2. **Start all services**:
    ```bash
+   # With Docker (recommended)
    npm start
    # or
    docker-compose up --build
+   
+   # Without Docker (Node.js only)
+   npm install --legacy-peer-deps
+   node demo-server.js  # Quick demo server
    ```
 
 3. **Access the services**:
@@ -51,6 +56,7 @@ The system consists of the following microservices:
    - Reporter: http://localhost:3003
    - Prometheus: http://localhost:9090
    - Grafana: http://localhost:3001 (admin/admin)
+   - Demo Server: http://localhost:3001 (if using demo-server.js)
 
 ### Development Mode
 
@@ -181,6 +187,17 @@ The architecture supports horizontal scaling:
 
 ## Testing
 
+### Quick Test
+```bash
+# Test deployment readiness
+./test-deployment.sh
+
+# Quick API demo
+node demo-server.js
+# Then visit: http://localhost:3001
+```
+
+### Full Testing
 ```bash
 # Run all tests
 npm test
@@ -190,6 +207,12 @@ npm run test:coverage
 
 # Run tests for specific service
 npm run test --workspace=services/gateway
+
+# Stress test (5+ minutes)
+node stress-test.js
+
+# Bulk processing test (50k events)
+node bulk-test.js
 ```
 
 ## Logging
