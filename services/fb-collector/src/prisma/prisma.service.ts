@@ -14,6 +14,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         { emit: 'event', level: 'info' },
         { emit: 'event', level: 'warn' },
       ],
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+      // Connection pool settings for stability
+      __internal: {
+        engine: {
+          connectTimeout: 30000, // 30 seconds
+          queryTimeout: 60000, // 60 seconds
+          poolTimeout: 30000, // 30 seconds
+        },
+      },
     });
 
     this.$on('query', (e) => {

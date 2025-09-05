@@ -18,6 +18,12 @@ export class NatsService implements OnModuleDestroy {
       this.connection = await connect({
         servers: natsUrl,
         name: 'ttk-collector-service',
+        timeout: 30000, // 30 seconds connection timeout
+        reconnect: true,
+        maxReconnectAttempts: -1, // unlimited reconnects
+        reconnectTimeWait: 2000, // 2 seconds between reconnects
+        pingInterval: 120000, // 2 minutes ping interval
+        maxPingOut: 3, // 3 failed pings before disconnect
       });
 
       this.jetStream = this.connection.jetstream();
@@ -38,7 +44,10 @@ export class NatsService implements OnModuleDestroy {
         deliver_policy: 'all',
         ack_policy: 'explicit',
         replay_policy: 'instant',
-        max_deliver: 3,
+        max_deliver: 5, // Increased retry attempts
+        ack_wait: 30000000000, // 30 seconds ack wait (in nanoseconds)
+        idle_heartbeat: 30000000000, // 30 seconds heartbeat
+        flow_control: true, // Enable flow control
       };
 
       const consumer = await this.jetStream.consumers.add('TIKTOK_EVENTS', consumerConfig);
@@ -47,13 +56,34 @@ export class NatsService implements OnModuleDestroy {
       this.logger.log('Subscribed to TikTok events');
 
       for await (const message of messages) {
+        const startTime = Date.now();
         try {
           const data = JSON.parse(message.string());
-          await callback(data);
+          
+          // Add timeout for processing
+          const processingPromise = callback(data);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Processing timeout')), 30000) // 30 second timeout
+          );
+          
+          await Promise.race([processingPromise, timeoutPromise]);
+          
+          const processingTime = Date.now() - startTime;
+          this.logger.log(`Processed TikTok event in ${processingTime}ms`);
           message.ack();
+          
         } catch (error) {
-          this.logger.error('Failed to process TikTok event', error.stack);
-          message.nak();
+          const processingTime = Date.now() - startTime;
+          this.logger.error(`Failed to process TikTok event after ${processingTime}ms: ${error.message}`, error.stack);
+          
+          // Check if it's a timeout or processing error
+          if (error.message.includes('timeout')) {
+            this.logger.error('Event processing timed out, will retry');
+            message.nak(); // Negative acknowledgment for retry
+          } else {
+            this.logger.error('Event processing failed permanently');
+            message.term(); // Terminate message (don't retry)
+          }
         }
       }
     } catch (error) {

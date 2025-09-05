@@ -19,6 +19,12 @@ export class NatsService implements OnModuleDestroy {
       this.connection = await connect({
         servers: natsUrl,
         name: 'gateway-service',
+        timeout: 30000, // 30 seconds connection timeout
+        reconnect: true,
+        maxReconnectAttempts: -1, // unlimited reconnects
+        reconnectTimeWait: 2000, // 2 seconds between reconnects
+        pingInterval: 120000, // 2 minutes ping interval
+        maxPingOut: 3, // 3 failed pings before disconnect
       });
 
       this.jetStream = this.connection.jetstream();
@@ -40,17 +46,19 @@ export class NatsService implements OnModuleDestroy {
         name: 'FACEBOOK_EVENTS',
         subjects: ['events.facebook.*'],
         retention: 'limits' as any,
-        maxAge: 24 * 60 * 60 * 1000 * 1000 * 1000, // 24 hours in nanoseconds
-        maxMsgs: 1000000,
-        maxBytes: 1024 * 1024 * 1024, // 1GB
+        maxAge: 7 * 24 * 60 * 60 * 1000 * 1000 * 1000, // 7 days in nanoseconds
+        maxMsgs: 10000000, // 10 million messages
+        maxBytes: 10 * 1024 * 1024 * 1024, // 10GB
+        storage: 'file' as any, // persistent storage
       },
       {
         name: 'TIKTOK_EVENTS',
         subjects: ['events.tiktok.*'],
         retention: 'limits' as any,
-        maxAge: 24 * 60 * 60 * 1000 * 1000 * 1000, // 24 hours in nanoseconds
-        maxMsgs: 1000000,
-        maxBytes: 1024 * 1024 * 1024, // 1GB
+        maxAge: 7 * 24 * 60 * 60 * 1000 * 1000 * 1000, // 7 days in nanoseconds
+        maxMsgs: 10000000, // 10 million messages
+        maxBytes: 10 * 1024 * 1024 * 1024, // 10GB
+        storage: 'file' as any, // persistent storage
       },
     ];
 
@@ -69,19 +77,40 @@ export class NatsService implements OnModuleDestroy {
   }
 
   async publishEvent(source: 'facebook' | 'tiktok', event: any, correlationId: string): Promise<void> {
-    try {
-      const subject = `events.${source}.${event.funnelStage}`;
-      const payload = {
-        ...event,
-        correlationId,
-        publishedAt: new Date().toISOString(),
-      };
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        const subject = `events.${source}.${event.funnelStage}`;
+        const payload = {
+          ...event,
+          correlationId,
+          publishedAt: new Date().toISOString(),
+        };
 
-      await this.jetStream.publish(subject, JSON.stringify(payload));
-      this.logger.log(`Published event to ${subject}`, 'NatsService');
-    } catch (error) {
-      this.logger.error(`Failed to publish event to ${source}`, error.stack);
-      throw error;
+        // Add timeout and retry logic
+        const publishPromise = this.jetStream.publish(subject, JSON.stringify(payload));
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Publish timeout')), 10000) // 10 second timeout
+        );
+
+        await Promise.race([publishPromise, timeoutPromise]);
+        this.logger.log(`Published event to ${subject}`, 'NatsService');
+        return; // Success, exit retry loop
+        
+      } catch (error) {
+        retryCount++;
+        this.logger.error(`Failed to publish event to ${source} (attempt ${retryCount}/${maxRetries}): ${error.message}`);
+        
+        if (retryCount >= maxRetries) {
+          this.logger.error(`Failed to publish event after ${maxRetries} attempts`, error.stack);
+          throw error;
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
     }
   }
 
