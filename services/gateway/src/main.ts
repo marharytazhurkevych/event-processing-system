@@ -3,8 +3,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { Logger } from '@shared/utils';
+import { initializeTracing } from '@shared/utils';
 
 async function bootstrap() {
+  // Initialize OpenTelemetry tracing
+  initializeTracing('gateway-service');
+
   const app = await NestFactory.create(AppModule, {
     logger: new Logger('Gateway'),
   });
