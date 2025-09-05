@@ -23,7 +23,7 @@
     "@nestjs/platform-express": "^10.2.10",
     "@nestjs/config": "^3.1.1",
     "@nestjs/terminus": "^10.2.0",
-    "prom-client": "^15.1.0",
+    "@willsoto/nestjs-prometheus": "^1.0.0",
     "@prisma/client": "^5.7.0",
     "zod": "^3.22.4",
     "reflect-metadata": "^0.1.13",

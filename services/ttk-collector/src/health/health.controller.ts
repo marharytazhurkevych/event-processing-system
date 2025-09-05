@@ -14,14 +14,14 @@ export class HealthController {
 
   @Get('liveness')
   @HealthCheck()
-  liveness(): HealthCheckResult {
-    return this.health.check([]);
+  async liveness(): Promise<HealthCheckResult> {
+    return await this.health.check([]);
   }
 
   @Get('readiness')
   @HealthCheck()
-  readiness(): HealthCheckResult {
-    return this.health.check([
+  async readiness(): Promise<HealthCheckResult> {
+    return await this.health.check([
       () => {
         const isNatsConnected = this.natsService.isConnected();
         return {
@@ -30,18 +30,21 @@ export class HealthController {
           },
         };
       },
-      () => {
-        return this.prismaService.$queryRaw`SELECT 1`
-          .then(() => ({
+      async () => {
+        try {
+          await this.prismaService.$queryRaw`SELECT 1`;
+          return {
             database: {
               status: 'up',
             },
-          }))
-          .catch(() => ({
+          };
+        } catch {
+          return {
             database: {
               status: 'down',
             },
-          }));
+          };
+        }
       },
     ]);
   }

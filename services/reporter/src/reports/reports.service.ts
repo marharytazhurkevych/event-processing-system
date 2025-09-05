@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MetricsService } from '../metrics/metrics.service';
-import { ReportFiltersInput, EventStats, RevenueData, DemographicsData } from '@shared/types';
+import { ReportFilters, EventStats, RevenueData, DemographicsData } from '@shared/types';
 import { Logger } from '@shared/utils';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class ReportsService {
     private readonly metricsService: MetricsService,
   ) {}
 
-  async getEventStats(filters: ReportFiltersInput): Promise<EventStats> {
+  async getEventStats(filters: ReportFilters): Promise<EventStats> {
     const { from, to, source, funnelStage, eventType } = filters;
     
     const whereClause: any = {};
@@ -73,7 +73,7 @@ export class ReportsService {
     };
   }
 
-  async getRevenueData(filters: ReportFiltersInput): Promise<RevenueData> {
+  async getRevenueData(filters: ReportFilters): Promise<RevenueData> {
     const { from, to, source, campaignId } = filters;
     
     const whereClause: any = {};
@@ -131,7 +131,7 @@ export class ReportsService {
     };
   }
 
-  async getDemographicsData(filters: ReportFiltersInput): Promise<DemographicsData> {
+  async getDemographicsData(filters: ReportFilters): Promise<DemographicsData> {
     const { from, to, source } = filters;
     
     const whereClause: any = {};

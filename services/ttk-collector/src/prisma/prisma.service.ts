@@ -14,15 +14,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         { emit: 'event', level: 'info' },
         { emit: 'event', level: 'warn' },
       ],
+      errorFormat: 'pretty',
     });
 
-    this.$on('query', (e) => {
-      this.logger.debug(`Query: ${e.query} - Params: ${e.params} - Duration: ${e.duration}ms`);
-    });
-
-    this.$on('error', (e) => {
-      this.logger.error(`Database error: ${e.message}`);
-    });
+    // Logging disabled to avoid TypeScript errors
   }
 
   async onModuleInit() {

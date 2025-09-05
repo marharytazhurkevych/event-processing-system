@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
-import { PrometheusModule } from '@nestjs/prometheus';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { PrismaModule } from './prisma/prisma.module';
 import { NatsModule } from './nats/nats.module';
 import { EventProcessorModule } from './event-processor/event-processor.module';

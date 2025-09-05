@@ -81,7 +81,7 @@ export class EventProcessorService implements OnModuleInit, OnModuleDestroy {
         funnelStage: event.funnelStage,
         eventType: event.eventType,
         userId: event.data.user.userId,
-        rawData: event,
+        rawData: event as any,
         correlationId,
       },
     });

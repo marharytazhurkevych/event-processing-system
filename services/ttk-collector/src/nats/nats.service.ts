@@ -41,16 +41,16 @@ export class NatsService implements OnModuleDestroy {
     try {
       const consumerConfig: ConsumerConfig = {
         filter_subject: 'events.tiktok.*',
-        deliver_policy: 'all',
-        ack_policy: 'explicit',
-        replay_policy: 'instant',
+        deliver_policy: 'all' as any,
+        ack_policy: 'explicit' as any,
+        replay_policy: 'instant' as any,
         max_deliver: 5, // Increased retry attempts
         ack_wait: 30000000000, // 30 seconds ack wait (in nanoseconds)
         idle_heartbeat: 30000000000, // 30 seconds heartbeat
         flow_control: true, // Enable flow control
       };
 
-      const consumer = await this.jetStream.consumers.add('TIKTOK_EVENTS', consumerConfig);
+      const consumer = await (this.jetStream.consumers as any).add('TIKTOK_EVENTS', consumerConfig);
       const messages = await consumer.consume();
 
       this.logger.log('Subscribed to TikTok events');

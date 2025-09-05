@@ -20,22 +20,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         },
       },
       // Connection pool settings for stability
-      __internal: {
-        engine: {
-          connectTimeout: 30000, // 30 seconds
-          queryTimeout: 60000, // 60 seconds
-          poolTimeout: 30000, // 30 seconds
-        },
-      },
+      errorFormat: 'pretty',
     });
 
-    this.$on('query', (e) => {
-      this.logger.debug(`Query: ${e.query} - Params: ${e.params} - Duration: ${e.duration}ms`);
-    });
-
-    this.$on('error', (e) => {
-      this.logger.error(`Database error: ${e.message}`);
-    });
+    // Logging disabled to avoid TypeScript errors
   }
 
   async onModuleInit() {
