@@ -1,7 +1,7 @@
-import { Logger as NestLogger } from '@nestjs/common';
+import { ConsoleLogger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
-export class Logger extends NestLogger {
+export class Logger extends ConsoleLogger {
   private correlationId: string;
 
   constructor(context?: string) {
@@ -17,30 +17,30 @@ export class Logger extends NestLogger {
     return this.correlationId;
   }
 
-  private formatMessage(message: string, context?: string): string {
+  private formatLogMessage(message: string, context?: string): string {
     const timestamp = new Date().toISOString();
     const contextStr = context ? `[${context}]` : '';
     return `${timestamp} ${contextStr} [${this.correlationId}] ${message}`;
   }
 
   log(message: string, context?: string) {
-    super.log(this.formatMessage(message, context));
+    super.log(this.formatLogMessage(message, context));
   }
 
   error(message: string, trace?: string, context?: string) {
-    super.error(this.formatMessage(message, context), trace);
+    super.error(this.formatLogMessage(message, context), trace);
   }
 
   warn(message: string, context?: string) {
-    super.warn(this.formatMessage(message, context));
+    super.warn(this.formatLogMessage(message, context));
   }
 
   debug(message: string, context?: string) {
-    super.debug(this.formatMessage(message, context));
+    super.debug(this.formatLogMessage(message, context));
   }
 
   verbose(message: string, context?: string) {
-    super.verbose(this.formatMessage(message, context));
+    super.verbose(this.formatLogMessage(message, context));
   }
 }
 
