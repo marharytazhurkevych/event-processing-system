@@ -18,36 +18,36 @@ const STREAMS: StreamDefinition[] = [
     name: 'EVENTS',
     subjects: ['events.*'],
     config: {
-      retention: 'limits',
+      retention: 'limits' as any,
       max_age: 24 * 60 * 60 * 1000 * 1000 * 1000, // 24 hours in nanoseconds
       max_bytes: 1024 * 1024 * 1024, // 1GB
       max_msgs: 1000000,
-      storage: 'file',
-      replicas: 1,
+      storage: 'file' as any,
+      
     },
   },
   {
     name: 'FACEBOOK_EVENTS',
     subjects: ['events.facebook.*'],
     config: {
-      retention: 'limits',
+      retention: 'limits' as any,
       max_age: 7 * 24 * 60 * 60 * 1000 * 1000 * 1000, // 7 days
       max_bytes: 2 * 1024 * 1024 * 1024, // 2GB
       max_msgs: 2000000,
-      storage: 'file',
-      replicas: 1,
+      storage: 'file' as any,
+      
     },
   },
   {
     name: 'TIKTOK_EVENTS',
     subjects: ['events.tiktok.*'],
     config: {
-      retention: 'limits',
+      retention: 'limits' as any,
       max_age: 7 * 24 * 60 * 60 * 1000 * 1000 * 1000, // 7 days
       max_bytes: 2 * 1024 * 1024 * 1024, // 2GB
       max_msgs: 2000000,
-      storage: 'file',
-      replicas: 1,
+      storage: 'file' as any,
+      
     },
   },
 ];
@@ -99,9 +99,9 @@ async function initializeNATS(): Promise<void> {
     // List all streams
     const streams = await jsm.streams.list();
     console.log('\n📋 Available streams:');
-    streams.forEach(stream => {
+    for await (const stream of streams) {
       console.log(`  - ${stream.config.name}: ${stream.config.subjects.join(', ')}`);
-    });
+    }
     
     console.log('\n🎉 NATS JetStream initialization completed successfully!');
     
